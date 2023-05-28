@@ -1,0 +1,73 @@
+package com.taslim.orderservice.service;
+
+import com.taslim.orderservice.dto.InventoryResponse;
+import com.taslim.orderservice.model.OrderLineItems;
+import com.taslim.orderservice.dto.OrderLineItemsDto;
+import com.taslim.orderservice.dto.OrderRequest;
+import com.taslim.orderservice.model.Order;
+import com.taslim.orderservice.repository.OrderRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+@Slf4j
+public class OrderService {
+
+    private final OrderRepository orderRepository;
+    private final WebClient.Builder webClientBuilder;
+
+    public void placeOrder(OrderRequest orderRequest) {
+        Order order = new Order();
+        order.setOrderNumber(UUID.randomUUID().toString());
+
+        List<OrderLineItems> orderLineItems = orderRequest.getOrderLineItemsDtoList()
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+        order.setOrderLineItemsList(orderLineItems);
+
+        List<String> skuCodes = order.getOrderLineItemsList().stream()
+                .map(OrderLineItems::getSkuCode)
+                .toList();
+
+        // Call Inventory Service, and place order if product is in
+        // stock
+
+        InventoryResponse[] inventoryResponsArray = webClientBuilder.build().get()
+                .uri("http://inventory-service/inventory",
+                        uriBuilder -> uriBuilder.queryParam("skuCode", skuCodes).build())
+                .retrieve()
+                .bodyToMono(InventoryResponse[].class)
+                .block();
+
+        boolean allBooksInStock = Arrays.stream(inventoryResponsArray)
+                .allMatch(InventoryResponse::isInStock);
+
+        if (allBooksInStock) {
+            orderRepository.save(order);
+        } else {
+            throw new IllegalArgumentException("Book is not in stock, please try again later");
+        }
+    }
+
+    private OrderLineItems mapToDto(OrderLineItemsDto orderLineItemsDto) {
+        OrderLineItems orderLineItems = new OrderLineItems();
+        orderLineItems.setPrice(orderLineItems.getPrice());
+        orderLineItems.setQuantity(orderLineItems.getQuantity());
+        orderLineItems.setSkuCode(orderLineItemsDto.getSkuCode());
+        return orderLineItems;
+    }
+
+
+
+
+}

@@ -2,13 +2,14 @@ package com.taslim.inventoryservice;
 
 import com.taslim.inventoryservice.model.Inventory;
 import com.taslim.inventoryservice.repository.InventoryRepository;
-import com.taslim.inventoryservice.service.InventoryService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
+@EnableEurekaClient
 public class InventoryServiceApplication {
 
 	public static void main(String[] args) {
@@ -20,12 +21,12 @@ public class InventoryServiceApplication {
 	{
 		return args -> {
 			Inventory inventory = new Inventory();
-			inventory.setSkuCode("DSA12");
-			inventory.setQuantity(23);
+			inventory.setSkuCode("DSA1");
+			inventory.setQuantity(100);
 
 			Inventory inventory1 = new Inventory();
 			inventory1.setSkuCode("DSA2");
-			inventory1.setQuantity(20);
+			inventory1.setQuantity(0);
 
 			inventoryRepository.save(inventory);
 			inventoryRepository.save(inventory1);
