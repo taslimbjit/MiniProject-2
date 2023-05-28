@@ -39,8 +39,7 @@ public class OrderService {
                 .map(OrderLineItems::getSkuCode)
                 .toList();
 
-        // Call Inventory Service, and place order if product is in
-        // stock
+        // Call Inventory Service, and place order if product is in stock
 
         InventoryResponse[] inventoryResponsArray = webClientBuilder.build().get()
                 .uri("http://inventory-service/inventory",
@@ -66,8 +65,4 @@ public class OrderService {
         orderLineItems.setSkuCode(orderLineItemsDto.getSkuCode());
         return orderLineItems;
     }
-
-
-
-
 }
